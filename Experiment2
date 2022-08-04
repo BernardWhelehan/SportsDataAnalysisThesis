@@ -1,0 +1,219 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.OptionalDouble;
+import java.util.Scanner;
+
+//code similar to experiment one, however games are limited to just home or away games
+
+public class Experiment2 {
+	public static void main(String[]args) throws IOException {
+		Scanner in = new Scanner(System.in);
+		System.out.println("Please enter the team name:");
+		String name = in.nextLine();
+		System.out.println("Home or Away?");
+		String location = in.nextLine();
+		in.close();
+		//Hashmap to hold all games and whether the team is home or away
+		HashMap<GameClass, String> games = GameIDsForTeam(name, location);
+		double TotalPoss=0;
+		double totalQ1,totalQ2,totalQ3,totalQ4,totalQ5,totalQ6,totalQ7,totalQ8,totalQ9;
+		totalQ1 = totalQ2 = totalQ3 = totalQ4 = totalQ5 = totalQ6 = totalQ7 = totalQ8 = totalQ9 = 0L;
+		//loop through games as follows
+		for(GameClass key : games.keySet()) {
+			//String status will be used to hold whether a team is home or away
+		   String status = games.get(key);
+	       int teamid;
+	       if(status == "A") {
+	    	   teamid = 0;
+	       }else {
+	    	   teamid = 1;
+	       }
+	       double xlength = key.xLength/6;
+	       double ylength = key.yLength/6;	      
+	       ArrayList<PlayerClass> array = FindMultiplier(key.fStart, key.gameID, teamid);
+	       OptionalDouble fX = array.stream().mapToDouble(PlayerClass->PlayerClass.x).average();
+	       double fx = fX.getAsDouble();
+	       System.out.println("\n"+key.Home + " Against " + key.Away);	       
+	       if(fx < 0) {
+		       System.out.println("First Half");	       
+	    	   StreamsLoop(key, key.fBArray, status, 1, xlength, ylength);
+		       System.out.println("Second Half");	       
+		       StreamsLoop(key, key.sBArray, status, -1, xlength, ylength);
+	       }else {
+		       System.out.println("First Half");	       
+	    	   StreamsLoop(key, key.fBArray, status, -1, xlength, ylength);
+		       System.out.println("Second Half");	       
+	    	   StreamsLoop(key, key.sBArray, status, 1, xlength, ylength);
+	       }
+	       
+	     }
+		
+		for(GameClass k : games.keySet()) {
+			TotalPoss += k.possession;
+			totalQ1 += (k.possessionTerritory.get(0)+k.possessionTerritory.get(9));
+			totalQ2 += (k.possessionTerritory.get(1)+k.possessionTerritory.get(10));
+			totalQ3 += (k.possessionTerritory.get(2)+k.possessionTerritory.get(11));
+			totalQ4 += (k.possessionTerritory.get(3)+k.possessionTerritory.get(12));
+			totalQ5 += (k.possessionTerritory.get(4)+k.possessionTerritory.get(13));
+			totalQ6 += (k.possessionTerritory.get(5)+k.possessionTerritory.get(14));
+			totalQ7 += (k.possessionTerritory.get(6)+k.possessionTerritory.get(15));
+			totalQ8 += (k.possessionTerritory.get(7)+k.possessionTerritory.get(16));
+			totalQ9 += (k.possessionTerritory.get(8)+k.possessionTerritory.get(17));
+		}
+		int div = games.size()*2;
+		System.out.println("..........");
+		System.out.println("Average Values Over The Season");
+		System.out.println("Average Possession: " + TotalPoss/games.size());
+		System.out.println("Average Possession Values in order from 1-9: " + (totalQ1/div + ", "+ totalQ2/div + ", " + totalQ3/div + ", " +totalQ4/div + ", " +totalQ5/div + ", " +totalQ6/div + ", " +totalQ7/div + ", " +totalQ8/div + ", " +totalQ9/div));
+
+	}
+	public static HashMap<GameClass,String> GameIDsForTeam(String Name, String location){
+	    HashMap<GameClass, String> games = new HashMap<GameClass, String>();
+		try {	
+			System.out.println("Started..." + Name);
+			FileReader reader = new FileReader("C:\\Users\\Ber\\eclipse-workspace\\.metadata\\ThesisWithProcessedFiles\\src\\GamesList.csv");
+			BufferedReader buffreader = new BufferedReader(reader);
+			//skip row of headings
+			buffreader.readLine();
+			String tuple = buffreader.readLine();
+			while(tuple != null) {
+				//split row into single attributes by comma delimiter
+				String[] eachAttribute = tuple.split(",");
+				//assign each attribute to a variable
+				String game_id = eachAttribute[1];
+				String Home = eachAttribute[2];
+				String Away = eachAttribute[3];
+        //circumventing corrupted data
+				if(!game_id.equals("987736")) {
+          //location is home and home team name = target do this
+					if(location.equalsIgnoreCase("Home") && Home.contains(Name)) {
+						GameClass  g = ProcessGameData(game_id, Home, Away);
+						games.put(g,"H");
+          //location is away and awy team name = target do this
+					}else if(location.equalsIgnoreCase("Away") && Away.contains(Name)) {
+						GameClass  g = ProcessGameData(game_id, Home, Away);
+						games.put(g,"A");
+					}// all games not satisfying conditions are ignored
+				}
+					tuple = buffreader.readLine();
+				}
+				buffreader.close();
+			}catch(IOException e) {
+				e.printStackTrace();
+		}
+		return games;
+	}
+	
+	//method for processing game data, x and y and starting+ending frame of each half
+	public static GameClass ProcessGameData(String GameID, String Home, String Away) throws IOException {
+		//read file which has been processed by python programme
+		FileReader reader = new FileReader("C:\\Users\\Ber\\PycharmProjects\\FootballThesis\\game.csv\\"+GameID+"game_df.csv");
+		BufferedReader buffreader = new BufferedReader(reader);
+		//skip row of headings
+		buffreader.readLine();
+		String tuple = buffreader.readLine();
+		//split row into single attributes by commas delimiter
+		String[] eachAttribute = tuple.split(",");
+		//assign each attribute to a variable		
+		int Fstart = Integer.parseInt(eachAttribute[3]);
+		int Fend = Integer.parseInt(eachAttribute[4]);
+		int Sstart = Integer.parseInt(eachAttribute[5]);
+		int Send = Integer.parseInt(eachAttribute[6]);
+		//array which will hold ball data
+		ArrayList<BallClass> fArray = new ArrayList<BallClass>();
+		ArrayList<BallClass> sArray = new ArrayList<BallClass>();
+		try {	
+			//read file which has been processed by python programme
+			FileReader Freader = new FileReader("C:\\Users\\Ber\\PycharmProjects\\FootballThesis\\ball.csv\\" + GameID + "ball_df.csv");
+			BufferedReader Breader = new BufferedReader(Freader);
+			//skip row of headings
+			Breader.readLine();
+			String tupleB = Breader.readLine();
+			while(tupleB != null) {
+				//split row into single attributes by commas delimiter
+				String[] Attribute = tupleB.split(",");
+				//create new BallClass Object and add to the array
+				BallClass b = new BallClass(Integer.parseInt(Attribute[1]), Double.parseDouble(Attribute[2]), Double.parseDouble(Attribute[3]), Double.parseDouble(Attribute[4]), Double.parseDouble(Attribute[5]), Attribute[6], Attribute[7]);
+				if(b.frame_num >= Fstart && b.frame_num <= Fend) {
+					fArray.add(b);
+				}else if(b.frame_num >= Sstart && b.frame_num <= Send) {
+					sArray.add(b);
+				}
+        //again avoiding OutOfMemory
+				for(int i = 0; i<25; i++) {
+					Breader.readLine();
+				}
+				//read next line and return to start of the while loop
+				tupleB = Breader.readLine();
+			}	
+			Breader.close();
+		}catch(IOException e) {
+			e.printStackTrace();
+		}
+		GameClass g = new GameClass(GameID,Home,Away,Integer.parseInt(eachAttribute[3]),Integer.parseInt(eachAttribute[4]),Integer.parseInt(eachAttribute[5]),Integer.parseInt(eachAttribute[6]), fArray, sArray, Double.valueOf((eachAttribute[1])), Double.valueOf((eachAttribute[2])));
+		buffreader.close();
+		return g;		
+	}
+	
+	public static void StreamsLoop(GameClass gc, ArrayList<BallClass> bArray, String status, int m, double xlength, double ylength) {
+		//use of java 8 streams to find total possession % and possession in each quadrant for chosen team
+		
+		Long inPlay = bArray.stream().filter(BallClass -> BallClass.inPlay.equals("Alive")).count();
+		//defensive quadrants
+		Long q1 = bArray.stream().filter(BallClass -> BallClass.inPlay.equals("Alive") && BallClass.poss.equals(status) && (BallClass.x*m) <= (xlength*-1) && (BallClass.y*m) < (ylength*-1)).count();
+		Long q2 = bArray.stream().filter(BallClass -> BallClass.inPlay.equals("Alive") && BallClass.poss.equals(status) && (BallClass.x*m) < (xlength*-1) && (BallClass.y*m) < (ylength) && (BallClass.y*m) > (ylength*-1)).count();
+		Long q3 = bArray.stream().filter(BallClass -> BallClass.inPlay.equals("Alive") && BallClass.poss.equals(status) && (BallClass.x*m) <= (xlength*-1) && (BallClass.y*m) > (ylength)).count();
+		//midfield quadrants
+		Long q4 = bArray.stream().filter(BallClass -> BallClass.inPlay.equals("Alive") && BallClass.poss.equals(status) && (BallClass.x*m) <= (xlength) && (BallClass.x*m) >= (xlength*-1) && (BallClass.y*m) < (ylength*-1)).count();
+		Long q5 = bArray.stream().filter(BallClass -> BallClass.inPlay.equals("Alive") && BallClass.poss.equals(status) && (BallClass.x*m) < (xlength) && (BallClass.x*m) >= (xlength*-1) && (BallClass.y*m) > (ylength*-1) && (BallClass.y*m) < (ylength)).count();
+		Long q6 = bArray.stream().filter(BallClass -> BallClass.inPlay.equals("Alive") && BallClass.poss.equals(status) && (BallClass.x*m) <= (xlength) && (BallClass.x*m) >= (xlength*-1) && (BallClass.y*m) > (ylength)).count();
+		//attacking quadrants
+		Long q7 = bArray.stream().filter(BallClass -> BallClass.inPlay.equals("Alive") && BallClass.poss.equals(status) && (BallClass.x*m) >= (xlength) && (BallClass.y*m) < (ylength*-1)).count();
+		Long q8 = bArray.stream().filter(BallClass -> BallClass.inPlay.equals("Alive") && BallClass.poss.equals(status) && (BallClass.x*m) > (xlength) && (BallClass.y*m) < (ylength) && (BallClass.y*m) > (ylength*-1)).count();
+		Long q9 = bArray.stream().filter(BallClass -> BallClass.inPlay.equals("Alive") && BallClass.poss.equals(status) && (BallClass.x*m) >= (xlength) && (BallClass.y*m) > (ylength)).count();
+		Long poss = q1+q2+q3+q4+q5+q6+q7+q8+q9;
+		//store values
+		if(gc.possession != 0) {
+			double totalGameposs = gc.possession + (Math.round((poss.doubleValue()/inPlay.doubleValue())*100));
+			gc.possession = totalGameposs/2;
+		}else {
+			gc.possession = (Math.round((poss.doubleValue()/inPlay.doubleValue())*100));
+		}
+		Collections.addAll(gc.possessionTerritory, Long.valueOf((Math.round((q1.doubleValue()/poss)*100))),Long.valueOf((Math.round((q2.doubleValue()/poss)*100))),Long.valueOf((Math.round((q3.doubleValue()/poss)*100))),Long.valueOf((Math.round((q4.doubleValue()/poss)*100))),Long.valueOf((Math.round((q5.doubleValue()/poss)*100))),Long.valueOf((Math.round((q6.doubleValue()/poss)*100))),Long.valueOf((Math.round((q7.doubleValue()/poss)*100))),Long.valueOf((Math.round((q8.doubleValue()/poss)*100))),Long.valueOf((Math.round((q9.doubleValue()/poss)*100))));
+		//print values
+		System.out.println("Overall possession = " + (Math.round((poss.doubleValue()/inPlay.doubleValue())*100)));
+		System.out.println("Possession Territory by Quadrant Q1 = " + (Math.round((q1.doubleValue()/poss)*100)) + "%. Q2 = " + (Math.round((q2.doubleValue()/poss)*100)) + "%. Q3 = " + (Math.round((q3.doubleValue()/poss)*100)) + "%. Q4 = " + (Math.round((q4.doubleValue()/poss)*100)) + "%. Q5 = " + (Math.round((q5.doubleValue()/poss)*100)) + "%. Q6 = " + (Math.round((q6.doubleValue()/poss)*100)) + "%. Q7 = " + (Math.round((q7.doubleValue()/poss)*100)) + "%. Q8 = " + (Math.round((q8.doubleValue()/poss)*100)) + "%. Q9 = " + (Math.round((q9.doubleValue()/poss)*100) + "%.")); 
+		
+	}	
+	
+		public static ArrayList<PlayerClass> FindMultiplier(int fStart, String gameID, int teamID) {
+				ArrayList<PlayerClass> array = new ArrayList<PlayerClass>();
+				try {
+					//read file which has been processed by python programme
+					FileReader reader = new FileReader("C:\\Users\\Ber\\PycharmProjects\\FootballThesis\\player.csv\\"+gameID+"player_df.csv");
+					BufferedReader buffreader = new BufferedReader(reader);
+					//skip row of headings
+					buffreader.readLine();
+					String tuple = buffreader.readLine();
+					while(tuple != null) {
+						//split row into single attributes by commas delimiter
+						String[] eachAttribute = tuple.split(",");
+						if(Integer.parseInt(eachAttribute[1]) == fStart && Integer.parseInt(eachAttribute[2]) == teamID) {
+							array.add(new PlayerClass(Integer.parseInt(eachAttribute[1]), Integer.parseInt(eachAttribute[2]), Integer.parseInt(eachAttribute[3]), Integer.parseInt(eachAttribute[4]), Double.parseDouble(eachAttribute[5]), Double.parseDouble(eachAttribute[6]), Double.parseDouble(eachAttribute[7])));
+							System.out.print(".");
+						}else if(Integer.parseInt(eachAttribute[1]) > fStart){
+							break;
+						}
+						tuple = buffreader.readLine();
+					}
+					buffreader.close();
+				}catch(IOException e) {
+					e.printStackTrace();
+				}	
+			return array;
+		}
+}
