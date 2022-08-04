@@ -2,20 +2,21 @@ public class GameClass {
 	
 	//game class contains all data relevent to the game, arrays of frames of player and ball data, for the first half, the second half,
 	//starting and ending frame of each half
-  int fStart,fEnd,sStart,sEnd;
-  //pitch parameters
+  	int fStart,fEnd,sStart,sEnd;
+  	//pitch parameters
 	double xLength,yLength;
-  //arrays of ball data tuples for each half
+ 	//arrays of ball data tuples for each half
 	ArrayList<BallClass> fBArray, sBArray;
-  //array used at a later date for adding possession territories
+  	//array used at a later date for adding possession territories
 	ArrayList<Long> possessionTerritory;
 	//variable to hold possession percentage
-  double possession;
-  //other relavent game variables
+  	double possession;
+  	//other relavent game variables
 	String gameID,Home,Away;
-  //array of player data for the game object
+  	//array of player data for the game object
 	ArrayList<PlayerClass> pc;
-  //overloaded constructor for creating GameClass objects
+  	
+	//overloaded constructor for creating GameClass objects
 	public GameClass(String gameid, String Home, String Away,int fStart, int fEnd, int sStart, int sEnd, ArrayList<BallClass> fBArray, ArrayList<BallClass> sBArray, double xLength, double yLength) {
 		this.gameID = gameid;
 		this.Home = Home;
