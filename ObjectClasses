@@ -1,0 +1,82 @@
+public class GameClass {
+	
+	//game class contains all data relevent to the game, arrays of frames of player and ball data, for the first half, the second half,
+	//starting and ending frame of each half
+  int fStart,fEnd,sStart,sEnd;
+  //pitch parameters
+	double xLength,yLength;
+  //arrays of ball data tuples for each half
+	ArrayList<BallClass> fBArray, sBArray;
+  //array used at a later date for adding possession territories
+	ArrayList<Long> possessionTerritory;
+	//variable to hold possession percentage
+  double possession;
+  //other relavent game variables
+	String gameID,Home,Away;
+  //array of player data for the game object
+	ArrayList<PlayerClass> pc;
+  //overloaded constructor for creating GameClass objects
+	public GameClass(String gameid, String Home, String Away,int fStart, int fEnd, int sStart, int sEnd, ArrayList<BallClass> fBArray, ArrayList<BallClass> sBArray, double xLength, double yLength) {
+		this.gameID = gameid;
+		this.Home = Home;
+		this.Away = Away;
+		this.fStart = fStart;
+		this.fEnd = fEnd;
+		this.sStart = sStart;
+		this.sEnd = sEnd;
+		this.fBArray = fBArray;
+		this.sBArray = sBArray;
+		this.xLength = xLength*100;
+		this.yLength = yLength*100;
+		this.possessionTerritory = new ArrayList<Long>();
+	}
+}
+
+//basic playerclass object
+public class PlayerClass {
+	//variables associated with PlayerClass
+	long frame_num;
+	int team_id; 
+	int player_id; 
+	int squadNum;
+	double x;
+	double y;
+	double speed;
+	//constructor method for PlayerClass
+	public PlayerClass(int frame_num, int team_id, int player_id, int squadNum, double x, double y, double speed) {
+		this.frame_num = frame_num;
+		this.team_id = team_id;
+		this.player_id = player_id;
+		this.squadNum = squadNum;
+		this.x = x;
+		this.y = y;
+		this.speed = speed;
+	}
+}
+
+//basic ballclass object
+public class BallClass {
+	//variables associated with BallClass
+	int frame_num;	
+	double x;
+	double y;	
+	double z;	
+	double speed;	
+	String poss;
+	String inPlay;
+	//constructor method for BallClass
+	public BallClass(int frame_num, double x, double y, double z, double speed, String poss, String inPlay) {
+		this.frame_num = frame_num;
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.speed = speed;
+		this.poss = poss;
+		this.inPlay = inPlay;
+	}
+}
+
+
+  
+  
+  
