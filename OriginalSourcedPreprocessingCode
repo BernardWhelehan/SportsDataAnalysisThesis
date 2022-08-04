@@ -1,0 +1,62 @@
+//code written by Keith O'Connor, provided by supervisor, Dr.Colm O'Riordan.
+
+
+
+import pandas as pd 
+import xml.etree.cElementTree as et
+from xml.dom import minidom
+
+# dat file
+def parse_frame(frame):
+    frame_split = frame.split(':')
+    frame_num = int(frame_split[0])
+    players = frame_split[1].split(';')
+    ball = frame_split[2].split(';')[0].split(',')
+    return [ frame_num, players, ball ]
+
+def get_game_data(dat_file_name):
+    raw_data = pd.read_csv(dat_file_name, sep='\s+', header=None, skiprows=1)
+    game_data = []
+    for frame in raw_data.iterrows():
+        [ frame_num, players, ball ] = parse_frame(frame[1][0])
+
+        # in_play: 'Dead' or 'Alive' 
+        ball_dict = { 'x':ball[0], 'y':ball[1], 'z':ball[2], 'speed':ball[3], 'poss':ball[4], 'in_play':ball[5] }
+        if(len(ball) >= 7): 
+            # ref_action: whistle' or 'b4' but usually doesn't exist
+            ball_dict['ref_action'] = ball[6] 
+        
+        players_list = []
+        for player in players:
+            p = player.split(',')
+            if(len(p) > 1):
+                # team: 1 = home, 0 = away, -1 = other (unassigned / officals)
+                players_list.append({ 'team':p[0], 'id':p[1], 'squadNum':p[2], 'x':p[3], 'y':p[4], 'speed':p[5] })
+
+        game_data.append({ 'frame_num':frame_num, 'ball':ball_dict, 'players':players_list })
+    return game_data
+    
+game_data = get_game_data('./data/987656.dat')
+print(game_data[0])
+
+
+
+# xml file
+def get_attr_value(ele, attr):
+    return ele.attributes[attr].value
+
+def get_xml_details(xml_file_name):
+    xml_data = minidom.parse(xml_file_name)
+    
+    match = xml_data.getElementsByTagName('match')[0]
+    pitch = { 'x': float(get_attr_value(match, 'fPitchXSizeMeters')), 'y': float(get_attr_value(match, 'fPitchYSizeMeters')) }
+
+    f = xml_data.getElementsByTagName('period')[0]
+    first_half = {'start': int(get_attr_value(f, 'iStartFrame')) , 'end': int(get_attr_value(f, 'iEndFrame')) }
+    s = xml_data.getElementsByTagName('period')[1]
+    second_half = {'start': int(get_attr_value(s, 'iStartFrame')), 'end': int(get_attr_value(s, 'iEndFrame')) }
+
+    return [ pitch, first_half, second_half ]
+
+[ pitch, first_half, second_half ] = get_xml_details('./data/987656_metadata.xml')
+print(pitch, first_half, second_half)
